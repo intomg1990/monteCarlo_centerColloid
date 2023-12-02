@@ -1,0 +1,6 @@
+mc_steps: 1000
+molar_conc: 0.5
+lambda_bje: 1.2
+box_size: 100
+charge_anion: 1.0
+charge_cation: -1.0
