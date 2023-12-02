@@ -1,6 +1,12 @@
 mc_steps: 1000
-molar_conc: 0.5
-lambda_bje: 1.2
-box_size: 100
+molar_conc: 0.125
+lambda_bje: 7.2
+box_size: 128.0
 charge_anion: 1.0
 charge_cation: -1.0
+charge_colloid: 24
+charge_counterion: -1.0
+radius_anion: 1.0
+radius_cation: 1.0
+radius_colloid: 24.0
+radius_counterion: 1.0
