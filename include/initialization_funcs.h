@@ -1,15 +1,24 @@
 #ifndef INITIALIZATION_FUNCS_H
 #define INITIALIZATION_FUNCS_H
 
-bool readParameters(const std::string& filename, int& mc_steps, double& molar_conc, double& lambda_bje, double& box_size,
-                    double& charge_anion, double& charge_cation, double& charge_colloid, double& charge_counterion,
-                    double& radius_anion, double& radius_cation, double& radius_colloid, double& radius_counterion);
+struct SimulationParameters {
+    double lambda_bjerrum;
+    double molar_conc;
+    double box_length;
+    int charge_anion;
+    int charge_cation;
+    int charge_colloid;
+    int charge_counterion;
+    double radius_anion;
+    double radius_cation;
+    int kappa_ewald;
+    double radius_cutoff;
+    int k_fourier_max;
+    int mc_steps;
+};
 
-void printParameters(int mc_steps, double molar_conc, double lambda_bje, double box_size, 
-                     double charge_anion, double charge_cation, double charge_colloid, double charge_counterion,
-                     double radius_anion, double radius_cation, double radius_colloid, double radius_counterion,
-                     int number_cations, int number_anions);
-
-void calculateParameters(const double& molar_conc, int& number_cations, int& number_anions, double& box_size);
+bool readParameters(const std::string& filename,
+                    SimulationParameters& params);
+void printParameters(const SimulationParameters& params);
 
 #endif // INITIALIZATION_FUNCS_H

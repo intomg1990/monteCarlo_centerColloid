@@ -1,121 +1,125 @@
-#include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <string>
-#include <unordered_map>
-#include <functional>
 #include <iomanip>
-#include <cmath>
+#include "initialization_funcs.h"
 
-bool readParameters(const std::string& filename, 
-                    int& mc_steps, 
-                    double& molar_conc, 
-                    double& lambda_bje, 
-                    double& box_size,
-                    double& charge_anion,
-                    double& charge_cation,
-                    double& charge_colloid,
-                    double& charge_counterion,
-                    double& radius_anion,
-                    double& radius_cation,
-                    double& radius_colloid,
-                    double& radius_counterion) 
+bool readParameters(const std::string& filename, SimulationParameters& params) 
 {
-    // Open file
     std::ifstream file(filename);
     
-    // Check if file is open
     if (!file.is_open()) 
     {
-        std::cerr << "Error openings file: " << filename << std::endl;
+        std::cerr << "Unable to open file: " << filename << std::endl;
+        
         return false;
     }
 
-    // Create map of keys and values
-    // The key is a string and the value is a function that takes a string as an argument and returns void
-    std::unordered_map<std::string, std::function<void(const std::string&)>> map;
-    map["mc_steps"]          = [&](const std::string& val) { mc_steps = std::stoi(val); };
-    map["molar_conc"]        = [&](const std::string& val) { molar_conc = std::stod(val); };
-    map["lambda_bje"]        = [&](const std::string& val) { lambda_bje = std::stod(val); };
-    map["box_size"]          = [&](const std::string& val) { box_size = std::stod(val); };
-    map["charge_anion"]      = [&](const std::string& val) { charge_anion = std::stod(val); };
-    map["charge_cation"]     = [&](const std::string& val) { charge_cation = std::stod(val); };
-    map["charge_colloid"]    = [&](const std::string& val) { charge_colloid = std::stod(val); };
-    map["charge_counterion"] = [&](const std::string& val) { charge_counterion = std::stod(val); };
-    map["radius_anion"]      = [&](const std::string& val) { radius_anion = std::stod(val); };
-    map["radius_cation"]     = [&](const std::string& val) { radius_cation = std::stod(val); };
-    map["radius_colloid"]    = [&](const std::string& val) { radius_colloid = std::stod(val); };
-    map["radius_counterion"] = [&](const std::string& val) { radius_counterion = std::stod(val); };
-
-    // Read file line by line
     std::string line;
-    
-    while (std::getline(file, line)) 
+
+    while (getline(file, line)) 
     {
         std::istringstream iss(line);
-        std::string key, value;
-        
-        // Split line into key and value
-        if (std::getline(iss, key, ':') && std::getline(iss, value)) 
+        std::string key;
+
+        if (!(iss >> key)) 
         {
-            if (map.find(key) != map.end()) 
-            {
-                map[key](value);
-            }
+            continue;
+        } 
+
+        if (key == "lambda_bjerrum")
+        {
+            iss >> params.lambda_bjerrum;
         }
+        else if (key == "molar_conc")
+        {
+            iss >> params.molar_conc;
+        }
+        else if (key == "box_length")
+        {
+            iss >> params.box_length;
+        }
+        else if (key == "charge_anion")
+        {
+            iss >> params.charge_anion;
+        }
+        else if (key == "charge_cation")
+        {
+            iss >> params.charge_cation;
+        }
+        else if (key == "charge_colloid")
+        {
+            iss >> params.charge_colloid;
+        }
+        else if (key == "charge_counterion")
+        {
+            iss >> params.charge_counterion;
+        }
+        else if (key == "radius_anion")
+        {
+            iss >> params.radius_anion;
+        }
+        else if (key == "radius_cation")
+        {
+            iss >> params.radius_cation;
+        }
+        else if (key == "kappa_ewald")
+        {
+            iss >> params.kappa_ewald;
+        }
+        else if (key == "radius_cutoff")
+        {
+            iss >> params.radius_cutoff;
+        }
+        else if (key == "k_fourier_max")
+        {
+            iss >> params.k_fourier_max;
+        }
+        else if (key == "mc_steps")
+        {
+            iss >> params.mc_steps;
+        }
+        else 
+        {
+            std::cerr << "Unknown parameter: " << key << std::endl;
+        }
+
     }
 
     file.close();
-    
+
     return true;
 }
 
 
-void printParameters(int mc_steps, 
-                     double molar_conc, 
-                     double lambda_bje, 
-                     double box_size,
-                     double charge_anion,
-                     double charge_cation,
-                     double charge_colloid,
-                     double charge_counterion,
-                     double radius_anion,
-                     double radius_cation,
-                     double radius_colloid,
-                     double radius_counterion,
-                     int number_cations,
-                     int number_anions) 
+void printParameters(const SimulationParameters& params) 
 {
-    int width = 48;
+    const int nameWidth = 30; 
+    const int valueWidth = 15;
 
-    // Print header
-    std::cout << std::left << std::setw(width) << "Input Parameter" << "Value" << '\n';
-    std::cout << std::string(56, '-') << '\n'; 
+    const std::string red = "\033[31m";
+    const std::string reset = "\033[0m"; 
 
-    // Print parameters
-    std::cout << std::setw(width) << "MC Steps:"            << mc_steps << '\n';
-    std::cout << std::setw(width) << "Molar Concentration:" << std::fixed << std::setprecision(2) << molar_conc << '\n';
-    std::cout << std::setw(width) << "Lambda BJE:"          << lambda_bje << '\n';
-    std::cout << std::setw(width) << "Box Size:"            << box_size << '\n';
-    std::cout << std::setw(width) << "Charge Anion:"        << charge_anion << '\n';
-    std::cout << std::setw(width) << "Charge Cation:"       << charge_cation << '\n';
-    std::cout << std::setw(width) << "Charge Colloid:"      << charge_colloid << '\n';
-    std::cout << std::setw(width) << "Charge Counterion:"   << charge_counterion << '\n';
-    std::cout << std::setw(width) << "Radius Anion:"        << radius_anion << '\n';
-    std::cout << std::setw(width) << "Radius Cation:"       << radius_cation << '\n';
-    std::cout << std::setw(width) << "Radius Colloid:"      << radius_colloid << '\n';
-    std::cout << std::setw(width) << "Radius Counterion:"   << radius_counterion << '\n';
+    std::cout << "Simulation Parameters:" << std::endl;
+    std::cout << std::string(60, '-') << std::endl;
 
-    std::cout << '\n';
+    std::cout << std::left; 
 
-    std::cout << std::left << std::setw(width) << "Calculated Parameter" << "Value" << '\n';
-    std::cout << std::string(56, '-') << '\n'; 
-    std::cout << std::setw(width) << "Number Cations:"      << number_cations << '\n';
-    std::cout << std::setw(width) << "Number Anions:"       << number_anions << '\n';
-}
+    std::cout << std::setw(nameWidth) << "Bjerrum Length:" << std::setw(valueWidth) << params.lambda_bjerrum << red << "Å" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Molar Concentration:" << std::setw(valueWidth) << params.molar_conc << red << "mol/L" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Box Length:" << std::setw(valueWidth) << params.box_length << red << "Å" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Anion Charge:" << std::setw(valueWidth) << params.charge_anion << red << "e" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Cation Charge:" << std::setw(valueWidth) << params.charge_cation << red << "e" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Colloid Charge:" << std::setw(valueWidth) << params.charge_colloid << red << "e" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Counterion Charge:" << std::setw(valueWidth) << params.charge_counterion << red << "e" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Anion Radius:" << std::setw(valueWidth) << params.radius_anion << red << "Å" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Cation Radius:" << std::setw(valueWidth) << params.radius_cation << red << "Å" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Ewald Kappa:" << std::setw(valueWidth) << params.kappa_ewald << red << "Å⁻¹" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Cutoff Radius:" << std::setw(valueWidth) << params.radius_cutoff << red << "Å" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Fourier K Max:" << std::setw(valueWidth) << params.k_fourier_max << red << "Å⁻¹" << reset << std::endl;
+    std::cout << std::setw(nameWidth) << "Monte Carlo Steps:" << std::setw(valueWidth) << params.mc_steps << red << "steps" << reset << std::endl;
 
-void calculateParameters(const double& molar_conc, int& number_cations, int& number_anions, double& box_size)
-{
-    number_cations = std::round(6.0221e-4 * molar_conc * box_size * box_size * box_size);
-    number_anions  = std::round(6.0221e-4 * molar_conc * box_size * box_size * box_size);
+    std::cout << std::string(60, '-') << std::endl; 
+    std::cout << "End of parameters list" << std::endl;
 }
