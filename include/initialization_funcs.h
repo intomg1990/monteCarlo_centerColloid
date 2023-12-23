@@ -1,7 +1,10 @@
+#include <vector>
+
 #ifndef INITIALIZATION_FUNCS_H
 #define INITIALIZATION_FUNCS_H
 
-struct SimulationParameters {
+struct SimulationParameters 
+{
     // Input parameters
     double lambda_bjerrum;
     double molar_conc;
@@ -30,13 +33,20 @@ struct SimulationParameters {
     double num_cations;
     double num_counterions;
     double num_particles;
+
+    double radius_cutoff_sq;
 };
 
-bool readParameters(const std::string& filename,
-                    SimulationParameters& params);
-void printParameters(const SimulationParameters& params);
+struct SimulationsVectors
+{
+    std::vector<int> charges;
+};
+
+bool readParameters(const std::string& filename, SimulationParameters& params);
+void printParameters(const SimulationParameters& params, bool is_calculated = false);
 void rescaleParameters(SimulationParameters& params);
 void calculateParameters(SimulationParameters& params);
+void allocateVectors(SimulationsVectors& vectors, const SimulationParameters& params);
 
 template <typename T>
 void printParameter(const std::string& name, const T& value, const std::string& unit);

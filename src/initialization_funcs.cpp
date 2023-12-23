@@ -89,32 +89,54 @@ void printParameter(const std::string& name, const T& value, const std::string& 
     std::cout << std::setw(name_width) << name << std::setw(value_width) << value << color << unit << reset << std::endl;
 }
 
-void printParameters(const SimulationParameters& params) 
+void printParameters(const SimulationParameters& params, bool is_calculated) 
 {
-    // Header
-    std::cout << "Simulation Input Parameters:" << std::endl;
+    std::string header_message, footer_message;
+    std::vector<std::tuple<std::string, double, std::string>> parameters_double;
+    std::vector<std::tuple<std::string, int, std::string>> parameters_int;
+
+    if (!is_calculated)
+    {
+        header_message = "Input Parameters List";
+        footer_message = "End of Input Parameters List";
+
+        parameters_double = {
+        {"Bjerrum Length:", params.lambda_bjerrum, "Å"},
+        {"Molar Concentration:", params.molar_conc, "mol/L"},
+        {"Box Length:", params.box_length, "Å"},
+        {"Anion Radius:", params.radius_anion, "Å"},
+        {"Cation Radius:", params.radius_cation, "Å"},
+        {"Colloid Radius:", params.radius_colloid, "Å"},
+        {"Counterion Radius:", params.radius_counterion, "Å"},
+        {"Cutoff Radius:", params.radius_cutoff, "Å"}
+        };
+
+        parameters_int = {
+        {"Anion Charge:", params.charge_anion, "e"},
+        {"Cation Charge:", params.charge_cation, "e"},
+        {"Colloid Charge:", params.charge_colloid, "e"},
+        {"Counterion Charge:", params.charge_counterion, "e"},
+        {"Fourier Max:", params.k_fourier_max, ""},
+        {"Ewald Kappa:", params.kappa_ewald, ""},
+        {"Monte Carlo Steps:", params.mc_steps, ""}
+        };
+    }
+    else
+    {
+        header_message = "Calculated Parameters List";
+        footer_message = "End of Calculated Parameters List";
+
+        parameters_double = {
+        {"Number of Anions:", params.num_anions, ""},
+        {"Number of Cations:", params.num_cations, ""},
+        {"Number of Counterions:", params.num_counterions, ""},
+        {"Number of Particles:", params.num_particles, ""},
+        };
+    }
+
+    std::cout << header_message << std::endl;
     std::cout << std::string(60, '-') << std::endl;
 
-    std::vector<std::tuple<std::string, double, std::string>> parameters_double = {
-    {"Bjerrum Length:", params.lambda_bjerrum, "Å"},
-    {"Molar Concentration:", params.molar_conc, "mol/L"},
-    {"Box Length:", params.box_length, "Å"},
-    {"Anion Radius:", params.radius_anion, "Å"},
-    {"Cation Radius:", params.radius_cation, "Å"},
-    {"Colloid Radius:", params.radius_colloid, "Å"},
-    {"Counterion Radius:", params.radius_counterion, "Å"},
-    {"Cutoff Radius:", params.radius_cutoff, "Å"}
-    };
-
-    std::vector<std::tuple<std::string, int, std::string>> parameters_int = {
-    {"Anion Charge:", params.charge_anion, "e"},
-    {"Cation Charge:", params.charge_cation, "e"},
-    {"Colloid Charge:", params.charge_colloid, "e"},
-    {"Counterion Charge:", params.charge_counterion, "e"},
-    {"Fourier Max:", params.k_fourier_max, ""},
-    {"Ewald Kappa:", params.kappa_ewald, ""},
-    {"Monte Carlo Steps:", params.mc_steps, ""}
-    };
 
     for (const auto& [name, value, unit] : parameters_double) 
     {
@@ -126,21 +148,23 @@ void printParameters(const SimulationParameters& params)
         printParameter(name, value, unit);
     }
 
-    // Footer
     std::cout << std::string(60, '-') << std::endl; 
-    std::cout << "End of input parameters list" << std::endl;
+    std::cout << footer_message << std::endl;
 
     std::cout << std::endl;
 }
 
-void rescaleParameters(SimulationParameters& params) {
-
+void rescaleParameters(SimulationParameters& params) 
+{
     params.box_length /= params.lambda_bjerrum;
     params.radius_anion /= params.lambda_bjerrum;
     params.radius_cation /= params.lambda_bjerrum;
     params.radius_colloid /= params.lambda_bjerrum;
     params.radius_counterion /= params.lambda_bjerrum;
     params.radius_cutoff /= params.lambda_bjerrum;
+
+    params.kappa_ewald /= params.box_length;
+    params.radius_cutoff *= params.box_length;
 
     // Concentration in simulation units
     params.molar_conc *= 1e-27 * std::pow(params.lambda_bjerrum, 3);
@@ -154,4 +178,32 @@ void calculateParameters(SimulationParameters& params)
     params.num_cations = params.num_anions;
     params.num_counterions = static_cast<int>(std::fabs(params.charge_colloid / params.charge_counterion));
     params.num_particles = params.num_anions + params.num_cations + params.num_counterions + 1;
+
+    params.radius_cutoff_sq = params.radius_cutoff * params.radius_cutoff;
+}
+
+void allocateVectors(SimulationsVectors& vectors, const SimulationParameters& params) 
+{
+    vectors.charges.resize(params.num_particles);
+    
+    for (int i = 0; i < params.num_particles; ++i) 
+    {
+        if (i == 0) 
+        {
+            vectors.charges[i] = params.charge_colloid;
+        } 
+        else if (i <= params.num_anions) 
+        {
+            vectors.charges[i] = params.charge_anion;
+        } 
+        else if (i <= params.num_anions + params.num_cations) 
+        {
+            vectors.charges[i] = params.charge_cation;
+        } 
+        else 
+        {
+            vectors.charges[i] = params.charge_counterion;
+        }
+    }
+
 }

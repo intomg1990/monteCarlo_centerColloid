@@ -4,12 +4,15 @@
 int main() 
 {
     SimulationParameters params;
+    SimulationsVectors vectors;
     
     if (readParameters("parameters.in", params)) 
     {
         printParameters(params);
         rescaleParameters(params);
         calculateParameters(params);
+        printParameters(params, true);
+        allocateVectors(vectors, params);
     } 
     else 
     {
