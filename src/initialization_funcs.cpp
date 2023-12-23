@@ -75,6 +75,8 @@ bool readParameters(const std::string& filename, SimulationParameters& params)
     return true;
 }
 
+
+
 template <typename T>
 void printParameter(const std::string& name, const T& value, const std::string& unit) 
 {
@@ -88,6 +90,8 @@ void printParameter(const std::string& name, const T& value, const std::string& 
     std::cout << std::left; 
     std::cout << std::setw(name_width) << name << std::setw(value_width) << value << color << unit << reset << std::endl;
 }
+
+
 
 void printParameters(const SimulationParameters& params, bool is_calculated) 
 {
@@ -154,21 +158,27 @@ void printParameters(const SimulationParameters& params, bool is_calculated)
     std::cout << std::endl;
 }
 
+
+
 void rescaleParameters(SimulationParameters& params) 
 {
     params.box_length /= params.lambda_bjerrum;
+
     params.radius_anion /= params.lambda_bjerrum;
     params.radius_cation /= params.lambda_bjerrum;
     params.radius_colloid /= params.lambda_bjerrum;
     params.radius_counterion /= params.lambda_bjerrum;
+    
     params.radius_cutoff /= params.lambda_bjerrum;
 
-    params.kappa_ewald /= params.box_length;
-    params.radius_cutoff *= params.box_length;
+    params.kappa_ewald = params.kappa_ewald / params.box_length;
+    params.radius_cutoff = params.radius_cutoff * params.box_length;
 
     // Concentration in simulation units
     params.molar_conc *= 1e-27 * std::pow(params.lambda_bjerrum, 3);
 }
+
+
 
 void calculateParameters(SimulationParameters& params) 
 {
@@ -182,28 +192,97 @@ void calculateParameters(SimulationParameters& params)
     params.radius_cutoff_sq = params.radius_cutoff * params.radius_cutoff;
 }
 
+
+
+bool check_overlap(const SimulationParameters& params, const SimulationsVectors& vectors, int i) 
+{
+
+    for (int j = 0; j < i; ++j) 
+    {
+        double dx = vectors.positions[i][0] - vectors.positions[j][0];
+        double dy = vectors.positions[i][1] - vectors.positions[j][1];
+        double dz = vectors.positions[i][2] - vectors.positions[j][2];
+
+        dx -= params.box_length * std::round(dx / params.box_length);
+        dy -= params.box_length * std::round(dy / params.box_length);
+        dz -= params.box_length * std::round(dz / params.box_length);
+
+        double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist < vectors.radii[i] + vectors.radii[j]) 
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+
+void setInitialPositions(SimulationsVectors& vectors, const SimulationParameters& params) 
+{
+    vectors.positions.resize(params.num_particles);
+    for (auto& position : vectors.positions) 
+    {
+        position.resize(3);
+    }
+
+    vectors.positions[0] = {0.0, 0.0, 0.0};
+
+    for (int i = 1; i < params.num_particles; ++i) 
+    {
+        
+        while (true) 
+        {
+            vectors.positions[i][0] = (2.0 * std::rand() / RAND_MAX - 1.0) * params.box_length / 2.0;
+            vectors.positions[i][1] = (2.0 * std::rand() / RAND_MAX - 1.0) * params.box_length / 2.0;
+            vectors.positions[i][2] = (2.0 * std::rand() / RAND_MAX - 1.0) * params.box_length / 2.0;
+
+            
+            if (!check_overlap(params, vectors, i)) 
+            {
+                break;
+            }
+        }
+
+    }
+
+    std::cout << "Initial positions set!\n" << std::endl;
+
+}
+
+    
+
 void allocateVectors(SimulationsVectors& vectors, const SimulationParameters& params) 
 {
     vectors.charges.resize(params.num_particles);
+    vectors.radii.resize(params.num_particles);
     
     for (int i = 0; i < params.num_particles; ++i) 
     {
         if (i == 0) 
         {
             vectors.charges[i] = params.charge_colloid;
+            vectors.radii[i] = params.radius_colloid;
         } 
         else if (i <= params.num_anions) 
         {
             vectors.charges[i] = params.charge_anion;
+            vectors.radii[i] = params.radius_anion;
         } 
         else if (i <= params.num_anions + params.num_cations) 
         {
             vectors.charges[i] = params.charge_cation;
+            vectors.radii[i] = params.radius_cation;
         } 
         else 
         {
             vectors.charges[i] = params.charge_counterion;
+            vectors.radii[i] = params.radius_counterion;
         }
     }
+
+    setInitialPositions(vectors, params);
 
 }

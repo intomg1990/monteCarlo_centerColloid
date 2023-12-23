@@ -40,6 +40,8 @@ struct SimulationParameters
 struct SimulationsVectors
 {
     std::vector<int> charges;
+    std::vector<double> radii;
+    std::vector<std::vector<double>> positions;
 };
 
 bool readParameters(const std::string& filename, SimulationParameters& params);
@@ -47,6 +49,7 @@ void printParameters(const SimulationParameters& params, bool is_calculated = fa
 void rescaleParameters(SimulationParameters& params);
 void calculateParameters(SimulationParameters& params);
 void allocateVectors(SimulationsVectors& vectors, const SimulationParameters& params);
+
 
 template <typename T>
 void printParameter(const std::string& name, const T& value, const std::string& unit);
