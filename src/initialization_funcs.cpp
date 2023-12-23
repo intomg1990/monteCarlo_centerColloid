@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <unordered_map>
 #include <cmath>
+#include <tuple>
+#include <vector>
 #include "initialization_funcs.h"
 
 bool readParameters(const std::string& filename, SimulationParameters& params) 
@@ -18,6 +20,7 @@ bool readParameters(const std::string& filename, SimulationParameters& params)
         return false;
     }
 
+    // Map keys to double pointers referring to the input parameters
     std::unordered_map<std::string, double*> param_map = {
         {"lambda_bjerrum", &params.lambda_bjerrum},
         {"molar_conc", &params.molar_conc},
@@ -45,11 +48,13 @@ bool readParameters(const std::string& filename, SimulationParameters& params)
     {
         std::istringstream iss(line);
         
+        // Skip empty lines
         if (!(iss >> key)) 
         {
             continue;
         } 
 
+        // Serach for key in input text file
         if (param_map.find(key) != param_map.end()) 
         {
             iss >> *param_map[key];
@@ -70,36 +75,58 @@ bool readParameters(const std::string& filename, SimulationParameters& params)
     return true;
 }
 
-
-void printParameters(const SimulationParameters& params) 
+template <typename T>
+void printParameter(const std::string& name, const T& value, const std::string& unit) 
 {
     const int name_width = 30; 
     const int value_width = 15;
 
-    const std::string red = "\033[31m";
+    // Set color codes for output
+    const std::string color = "\033[31m";
     const std::string reset = "\033[0m"; 
+    
+    std::cout << std::left; 
+    std::cout << std::setw(name_width) << name << std::setw(value_width) << value << color << unit << reset << std::endl;
+}
 
+void printParameters(const SimulationParameters& params) 
+{
+    // Header
     std::cout << "Simulation Input Parameters:" << std::endl;
     std::cout << std::string(60, '-') << std::endl;
 
-    std::cout << std::left; 
+    std::vector<std::tuple<std::string, double, std::string>> parameters_double = {
+    {"Bjerrum Length:", params.lambda_bjerrum, "Å"},
+    {"Molar Concentration:", params.molar_conc, "mol/L"},
+    {"Box Length:", params.box_length, "Å"},
+    {"Anion Radius:", params.radius_anion, "Å"},
+    {"Cation Radius:", params.radius_cation, "Å"},
+    {"Colloid Radius:", params.radius_colloid, "Å"},
+    {"Counterion Radius:", params.radius_counterion, "Å"},
+    {"Cutoff Radius:", params.radius_cutoff, "Å"}
+    };
 
-    std::cout << std::setw(name_width) << "Bjerrum Length:" << std::setw(value_width) << params.lambda_bjerrum << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Molar Concentration:" << std::setw(value_width) << params.molar_conc << red << "mol/L" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Box Length:" << std::setw(value_width) << params.box_length << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Anion Charge:" << std::setw(value_width) << params.charge_anion << red << "e" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Cation Charge:" << std::setw(value_width) << params.charge_cation << red << "e" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Colloid Charge:" << std::setw(value_width) << params.charge_colloid << red << "e" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Counterion Charge:" << std::setw(value_width) << params.charge_counterion << red << "e" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Anion Radius:" << std::setw(value_width) << params.radius_anion << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Cation Radius:" << std::setw(value_width) << params.radius_cation << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Colloid Radius:" << std::setw(value_width) << params.radius_colloid << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Counterion Radius:" << std::setw(value_width) << params.radius_counterion << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Ewald Kappa:" << std::setw(value_width) << params.kappa_ewald << red << "Å⁻¹" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Cutoff Radius:" << std::setw(value_width) << params.radius_cutoff << red << "Å" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Fourier K Max:" << std::setw(value_width) << params.k_fourier_max << red << "Å⁻¹" << reset << std::endl;
-    std::cout << std::setw(name_width) << "Monte Carlo Steps:" << std::setw(value_width) << params.mc_steps << red << "steps" << reset << std::endl;
+    std::vector<std::tuple<std::string, int, std::string>> parameters_int = {
+    {"Anion Charge:", params.charge_anion, "e"},
+    {"Cation Charge:", params.charge_cation, "e"},
+    {"Colloid Charge:", params.charge_colloid, "e"},
+    {"Counterion Charge:", params.charge_counterion, "e"},
+    {"Fourier Max:", params.k_fourier_max, ""},
+    {"Ewald Kappa:", params.kappa_ewald, ""},
+    {"Monte Carlo Steps:", params.mc_steps, ""}
+    };
 
+    for (const auto& [name, value, unit] : parameters_double) 
+    {
+        printParameter(name, value, unit);
+    }
+
+    for (const auto& [name, value, unit] : parameters_int) 
+    {
+        printParameter(name, value, unit);
+    }
+
+    // Footer
     std::cout << std::string(60, '-') << std::endl; 
     std::cout << "End of input parameters list" << std::endl;
 
@@ -107,12 +134,6 @@ void printParameters(const SimulationParameters& params)
 }
 
 void rescaleParameters(SimulationParameters& params) {
-    
-    if (params.lambda_bjerrum == 0) 
-    {
-        std::cerr << "Bjerrum length cannot be zero for rescaling." << std::endl;
-        return;
-    }
 
     params.box_length /= params.lambda_bjerrum;
     params.radius_anion /= params.lambda_bjerrum;
@@ -121,6 +142,7 @@ void rescaleParameters(SimulationParameters& params) {
     params.radius_counterion /= params.lambda_bjerrum;
     params.radius_cutoff /= params.lambda_bjerrum;
 
+    // Concentration in simulation units
     params.molar_conc *= 1e-27 * std::pow(params.lambda_bjerrum, 3);
 }
 
@@ -130,4 +152,6 @@ void calculateParameters(SimulationParameters& params)
     
     params.num_anions = static_cast<int>(std::round(6.0221e23 * params.molar_conc * params.volume));
     params.num_cations = params.num_anions;
+    params.num_counterions = static_cast<int>(std::fabs(params.charge_colloid / params.charge_counterion));
+    params.num_particles = params.num_anions + params.num_cations + params.num_counterions + 1;
 }
