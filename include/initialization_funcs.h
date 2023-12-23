@@ -11,14 +11,23 @@ struct SimulationParameters {
     int charge_counterion;
     double radius_anion;
     double radius_cation;
+    double radius_colloid;
+    double radius_counterion;
     int kappa_ewald;
     double radius_cutoff;
     int k_fourier_max;
     int mc_steps;
+
+    double volume;
+    double num_anions;
+    double num_cations;
+    double num_counterions;
 };
 
 bool readParameters(const std::string& filename,
                     SimulationParameters& params);
 void printParameters(const SimulationParameters& params);
+void rescaleParameters(SimulationParameters& params);
+void calculateParameters(SimulationParameters& params);
 
 #endif // INITIALIZATION_FUNCS_H

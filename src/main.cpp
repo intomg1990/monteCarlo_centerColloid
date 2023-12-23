@@ -8,6 +8,8 @@ int main()
     if (readParameters("parameters.in", params)) 
     {
         printParameters(params);
+        rescaleParameters(params);
+        calculateParameters(params);
     } 
     else 
     {
