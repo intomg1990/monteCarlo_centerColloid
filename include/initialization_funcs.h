@@ -44,14 +44,7 @@ struct SimulationsVectors
     std::vector<std::vector<double>> positions;
 };
 
-bool readParameters(const std::string& filename, SimulationParameters& params);
-void printParameters(const SimulationParameters& params, bool is_calculated = false);
-void rescaleParameters(SimulationParameters& params);
-void calculateParameters(SimulationParameters& params);
-void allocateVectors(SimulationsVectors& vectors, const SimulationParameters& params);
-
-
-template <typename T>
-void printParameter(const std::string& name, const T& value, const std::string& unit);
+void callInitializationFuncs(SimulationParameters& params, SimulationsVectors& vectors);
+bool readParameters(const std::string& filename, SimulationParameters& params) ;
 
 #endif // INITIALIZATION_FUNCS_H

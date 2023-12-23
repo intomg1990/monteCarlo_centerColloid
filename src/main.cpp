@@ -8,11 +8,7 @@ int main()
     
     if (readParameters("parameters.in", params)) 
     {
-        printParameters(params);
-        rescaleParameters(params);
-        calculateParameters(params);
-        printParameters(params, true);
-        allocateVectors(vectors, params);
+        callInitializationFuncs(params, vectors);
     } 
     else 
     {
